@@ -1,0 +1,14 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Builds a DynamoDB table.
+Resources:
+  DemoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: 'NLPText'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: hash
+          AttributeType: S
+      KeySchema:
+        - AttributeName: hash
+          KeyType: HASH
