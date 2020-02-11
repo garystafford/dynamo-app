@@ -85,7 +85,7 @@ func getHealth(c echo.Context) error {
 	var response interface{}
 	err := json.Unmarshal([]byte(`{"status":"UP"}`), &response)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return c.JSON(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -115,7 +115,7 @@ func writeToDynamo(c echo.Context) error {
 	jsonMap := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonMap)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return c.JSON(http.StatusInternalServerError, err)
 	}
 
 	text := (jsonMap["text"]).(string)
@@ -129,7 +129,7 @@ func writeToDynamo(c echo.Context) error {
 
 	av, err := dynamodbattribute.MarshalMap(nlpText)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return c.JSON(http.StatusInternalServerError, err)
 	}
 
 	input := &dynamodb.PutItemInput{
@@ -139,7 +139,7 @@ func writeToDynamo(c echo.Context) error {
 
 	_, err = svc.PutItem(input)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return c.JSON(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, "{}")
