@@ -4,21 +4,36 @@ Go-based microservice, part of a set of (5) microservices for the application us
 
 ## Run from IDE
 
+Create DynamoDB CloudFormation stack
+
+```bash
+aws cloudformation create-stack \
+    --stack-name dynamodb-table-stack \
+    --template-body file://dynamodb-table.yml
+```
+
 Run each of the (5) service from a different terminal window.
 
 ```bash
-export NLP_CLIENT_PORT=8080
-export RAKE_PORT=8081
-export PROSE_PORT=8082
-export LANG_PORT=8083
-export DYNAMO_PORT=8084
-export RACK_ENDPOINT=http://localhost:${RAKE_PORT}
-export PROSE_ENDPOINT=http://localhost:${PROSE_PORT}
-export LANG_ENDPOINT=http://localhost:${LANG_PORT}
-export DYNAMO_ENDPOINT=http://localhost:${DYNAMO_PORT}
-export AUTH_KEY=SuP3r5eCRetAutHK3y
+    export NLP_CLIENT_PORT=8080
+    export RAKE_PORT=8081
+    export PROSE_PORT=8082
+    export LANG_PORT=8083
+    export DYNAMO_PORT=8084
+    export RACK_ENDPOINT=http://localhost:${RAKE_PORT}
+    export PROSE_ENDPOINT=http://localhost:${PROSE_PORT}
+    export LANG_ENDPOINT=http://localhost:${LANG_PORT}
+    export DYNAMO_ENDPOINT=http://localhost:${DYNAMO_PORT}
+    export API_KEY=SuP3r5eCRetAutHK3y
+    TEXT="The Nobel Prize is regarded as the most prestigious award in the World. Notable winners have included Marie Curie, Theodore Roosevelt, Albert Einstein, George Bernard Shaw, and Winston Churchill."
 
 go run *.go
+
+curl -s -X POST \
+    http://localhost:NLP_CLIENT_PORT/routes \
+    -H "X-API-Key: ${API_KEY}" \
+    -H "Content-Type: application/json" \
+    -d "{\"text\": \"${TEXT}\"}"
 ```
 
 ## Build Required Images for Docker
@@ -74,7 +89,7 @@ export RACK_ENDPOINT=http://localhost:${RAKE_PORT}
 export PROSE_ENDPOINT=http://localhost:${PROSE_PORT}
 export LANG_ENDPOINT=http://localhost:${LANG_PORT}
 export DYNAMO_ENDPOINT=http://localhost:${DYNAMO_PORT}
-export AUTH_KEY=SuP3r5eCRetAutHK3y
+export API_KEY=SuP3r5eCRetAutHK3y
 
 docker stack deploy --compose-file stack.yml nlp
 
@@ -102,7 +117,7 @@ CONTAINER ID        IMAGE                                                       
 ac5501bb9a79        111222333444.dkr.ecr.us-east-2.amazonaws.com/rake-app:1.0.0       "/go/bin/app"       14 seconds ago      Up 13 seconds                           nlp_rake-app.1.jpctxbvzhcseo8uwuldwlp7hp
 7dc171f89f9f        999888777666.dkr.ecr.us-west-2.amazonaws.com/nlp-client:1.0.0     "/go/bin/app"       15 seconds ago      Up 12 seconds                           nlp_nlp-client.1.t96hg46g76uwsvr7i6bweluxz
 7ae5369d4293        999888777666.dkr.ecr.us-west-2.amazonaws.com/prose-app:1.0.0      "/go/bin/app"       15 seconds ago      Up 13 seconds                           nlp_prose-app.1.6wkb8x6slva7t253ksucfshyu
-4ab51b9f4271        999888777666.dkr.ecr.us-west-2.amazonaws.com/lang-app:1.0.0       "/go/bin/app"       15 seconds ago      Up 13 seconds                           nlp_lang-app.1.jpctxbvzhcseo8uwuldwlp7hp
-4ab51b9f4271        999888777666.dkr.ecr.us-west-2.amazonaws.com/dynamo-app:1.0.0     "/go/bin/app"       18 seconds ago      Up 13 seconds                           nlp_dynamo-app.1.t96hg46g76uwsvr7i6bweluxz
-Admin-01:~/environment/ecr-cross-accnt-demo (master) $ 
+4ab51b9f4271        999888777666.dkr.ecr.us-west-2.amazonaws.com/lang-app:1.0.0       "/go/bin/app"       15 seconds ago      Up 13 seconds                           nlp_lang-app.1.hlczjvxpppecosuwdt8bhu7wl
+4ab51b9f4271        999888777666.dkr.ecr.us-west-2.amazonaws.com/dynamo-app:1.0.0     "/go/bin/app"       18 seconds ago      Up 13 seconds                           nlp_dynamo-app.1.twe6izgw7xhg6ruvu96sl6b74
+Admin-01:~/environment/ecr-cross-accnt-demo (master) $
 ```

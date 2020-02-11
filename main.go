@@ -19,6 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -30,21 +31,17 @@ type NlpText struct {
 }
 
 var (
-	serverPort = ":" + getEnv("LANG_PORT", "8080")
-	log        *logrus.Logger
+	serverPort = ":" + getEnv("DYNAMO_PORT", "")
+	apiKey     = getEnv("API_KEY", "")
+	log        = logrus.New()
 )
 
 func init() {
-	log = logrus.New()
 	log.Formatter = &logrus.JSONFormatter{
-		FieldMap: logrus.FieldMap{
-			logrus.FieldKeyTime:  "time",
-			logrus.FieldKeyLevel: "severity",
-			logrus.FieldKeyMsg:   "message",
-		},
 		TimestampFormat: time.RFC3339Nano,
 	}
 	log.Out = os.Stdout
+	log.SetLevel(logrus.DebugLevel)
 }
 
 func main() {
@@ -55,17 +52,19 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	//e.Use(middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
-	//	Skipper: func(c echo.Context) bool {
-	//		if strings.HasPrefix(c.Request().RequestURI, "/health") {
-	//			return true
-	//		}
-	//		return false
-	//	},
-	//	Validator: func(key string, c echo.Context) (bool, error) {
-	//		return key == os.Getenv("AUTH_KEY"), nil
-	//	},
-	//}))
+	e.Use(middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
+		KeyLookup: "header:X-API-Key",
+		Skipper: func(c echo.Context) bool {
+			if strings.HasPrefix(c.Request().RequestURI, "/health") {
+				return true
+			}
+			return false
+		},
+		Validator: func(key string, c echo.Context) (bool, error) {
+			log.Debugf("API_KEY: %v", apiKey)
+			return key == apiKey, nil
+		},
+	}))
 
 	// Routes
 	e.GET("/health", getHealth)
@@ -93,9 +92,10 @@ func getHealth(c echo.Context) error {
 }
 
 func getMD5Hash(text string) string {
-	hasher := md5.New()
-	hasher.Write([]byte(text))
-	return hex.EncodeToString(hasher.Sum(nil))
+	hash := md5.New()
+	hash.Write([]byte(text))
+
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 func writeToDynamo(c echo.Context) error {
