@@ -1,4 +1,4 @@
-w# Build based tips from:
+# Build based tips from:
 # https://medium.com/@chemidy/create-the-smallest-and-secured-golang-docker-image-based-on-scratch-4752223b7324
 
 ################################
