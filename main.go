@@ -1,8 +1,9 @@
 // author: Gary A. Stafford
 // site: https://programmaticponderings.com
 // license: MIT License
-// purpose: Provides fast natural language detection for various languages
-//          by https://github.com/rylans/getlang
+// purpose: RESTful Go implementation of github.com/aws/aws-sdk-go/service/dynamodb package
+//          Provides ability to put text in request payload to DynamoDB table
+//          by https://github.com/aws/aws-sdk-go
 
 package main
 
@@ -85,7 +86,8 @@ func getHealth(c echo.Context) error {
 	var response interface{}
 	err := json.Unmarshal([]byte(`{"status":"UP"}`), &response)
 	if err != nil {
-		return err
+		log.Errorf("json.Unmarshal Error: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -115,7 +117,8 @@ func writeToDynamo(c echo.Context) error {
 	jsonMap := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonMap)
 	if err != nil {
-		return err
+		log.Errorf("json.NewDecoder Error: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	text := (jsonMap["text"]).(string)
@@ -129,20 +132,19 @@ func writeToDynamo(c echo.Context) error {
 
 	av, err := dynamodbattribute.MarshalMap(nlpText)
 	if err != nil {
-		return err
+		log.Errorf("dynamodbattribute.MarshalMap Error: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	input := &dynamodb.PutItemInput{
 		Item:      av,
 		TableName: aws.String(tableName),
 	}
-	//log.Debugf("input.TableName: %v", input.TableName)
-	//log.Debugf("input.Item: %v", input.Item)
 
 	_, err = svc.PutItem(input)
 	if err != nil {
-		log.Debugf("DynamoDB PutItem Error: %v", err)
-		return err
+		log.Errorf("svc.PutItem Error: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
 
 	return c.JSON(http.StatusOK, nil)
