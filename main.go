@@ -4,6 +4,7 @@
 // purpose: RESTful Go implementation of github.com/aws/aws-sdk-go/service/dynamodb package
 //          Provides ability to put text in request payload to DynamoDB table
 //          by https://github.com/aws/aws-sdk-go
+// modified: 2021-04-25
 
 package main
 
@@ -24,7 +25,6 @@ import (
 	"time"
 )
 
-// NLPText is the text in the request payload
 type NlpText struct {
 	Timestamp int64  `json:"timestamp"` // record date/time
 	Hash      string `json:"hash"`      // MD5 hash of text
