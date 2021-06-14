@@ -34,7 +34,7 @@ type NlpText struct {
 
 var (
 	logLevel   = getEnv("LOG_LEVEL", "1") // INFO
-	serverPort = getEnv("NLP_CLIENT_PORT", ":8080")
+	serverPort = getEnv("DYNAMO_PORT", ":8080")
 	apiKey     = getEnv("API_KEY", "ChangeMe")
 	e          = echo.New()
 )
