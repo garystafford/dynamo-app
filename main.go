@@ -4,7 +4,7 @@
 // purpose: RESTful Go implementation of github.com/aws/aws-sdk-go/service/dynamodb package
 //          Provides ability to put text in request payload to DynamoDB table
 //          by https://github.com/aws/aws-sdk-go
-// modified: 2021-04-25
+// modified: 2021-06-13
 
 package main
 
@@ -16,11 +16,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
-	"github.com/sirupsen/logrus"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -32,23 +33,25 @@ type NlpText struct {
 }
 
 var (
-	serverPort = ":" + getEnv("DYNAMO_PORT", "")
-	apiKey     = getEnv("API_KEY", "")
-	log        = logrus.New()
-
-	// Echo instance
-	e = echo.New()
+	logLevel   = getEnv("LOG_LEVEL", "1") // INFO
+	serverPort = getEnv("NLP_CLIENT_PORT", ":8080")
+	apiKey     = getEnv("API_KEY", "ChangeMe")
+	e          = echo.New()
 )
 
 func init() {
-	log.Formatter = &logrus.JSONFormatter{
-		TimestampFormat: time.RFC3339Nano,
-	}
-	log.Out = os.Stdout
-	log.SetLevel(logrus.DebugLevel)
+	level, _ := strconv.Atoi(logLevel)
+	e.Logger.SetLevel(log.Lvl(level))
 }
 
 func main() {
+	if err := run(); err != nil {
+		e.Logger.Fatal(err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -72,7 +75,7 @@ func main() {
 	e.POST("/record", writeToDynamo)
 
 	// Start server
-	e.Logger.Fatal(e.Start(serverPort))
+	return e.Start(serverPort)
 }
 
 func getEnv(key, fallback string) string {
