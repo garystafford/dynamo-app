@@ -12,6 +12,12 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -19,11 +25,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
-	"net/http"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type NlpText struct {
@@ -33,7 +34,7 @@ type NlpText struct {
 }
 
 var (
-	logLevel   = getEnv("LOG_LEVEL", "1") // INFO
+	logLevel   = getEnv("LOG_LEVEL", "1") // DEBUG
 	serverPort = getEnv("DYNAMO_PORT", ":8080")
 	apiKey     = getEnv("API_KEY", "ChangeMe")
 	e          = echo.New()
