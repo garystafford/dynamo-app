@@ -39,45 +39,6 @@ var (
 	e          = echo.New()
 )
 
-func init() {
-	level, _ := strconv.Atoi(logLevel)
-	e.Logger.SetLevel(log.Lvl(level))
-}
-
-func main() {
-	if err := run(); err != nil {
-		e.Logger.Fatal(err)
-		os.Exit(1)
-	}
-}
-
-func run() error {
-	// Middleware
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-
-	e.Use(middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
-		KeyLookup: "header:X-API-Key",
-		Skipper: func(c echo.Context) bool {
-			if strings.HasPrefix(c.Request().RequestURI, "/health") {
-				return true
-			}
-			return false
-		},
-		Validator: func(key string, c echo.Context) (bool, error) {
-			log.Debugf("API_KEY: %v", apiKey)
-			return key == apiKey, nil
-		},
-	}))
-
-	// Routes
-	e.GET("/health", getHealth)
-	e.POST("/record", writeToDynamo)
-
-	// Start server
-	return e.Start(serverPort)
-}
-
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value
@@ -86,14 +47,10 @@ func getEnv(key, fallback string) string {
 }
 
 func getHealth(c echo.Context) error {
-	var response interface{}
-	err := json.Unmarshal([]byte(`{"status":"UP"}`), &response)
-	if err != nil {
-		log.Errorf("json.Unmarshal Error: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
-
-	return c.JSON(http.StatusOK, response)
+	healthStatus := struct {
+		Status string `json:"status"`
+	}{"Up"}
+	return c.JSON(http.StatusOK, healthStatus)
 }
 
 func getMD5Hash(text string) string {
@@ -151,4 +108,43 @@ func writeToDynamo(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, nil)
+}
+
+func run() error {
+	// Middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	e.Use(middleware.KeyAuthWithConfig(middleware.KeyAuthConfig{
+		KeyLookup: "header:X-API-Key",
+		Skipper: func(c echo.Context) bool {
+			if strings.HasPrefix(c.Request().RequestURI, "/health") {
+				return true
+			}
+			return false
+		},
+		Validator: func(key string, c echo.Context) (bool, error) {
+			log.Debugf("API_KEY: %v", apiKey)
+			return key == apiKey, nil
+		},
+	}))
+
+	// Routes
+	e.GET("/health", getHealth)
+	e.POST("/record", writeToDynamo)
+
+	// Start server
+	return e.Start(serverPort)
+}
+
+func init() {
+	level, _ := strconv.Atoi(logLevel)
+	e.Logger.SetLevel(log.Lvl(level))
+}
+
+func main() {
+	if err := run(); err != nil {
+		e.Logger.Fatal(err)
+		os.Exit(1)
+	}
 }
